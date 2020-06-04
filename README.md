@@ -1,7 +1,7 @@
 # Casting-Agency-Specifications
 
 ## Casting Agency project
-The Casting Agency models a company that is responsible for creating movies and managing and assigning actors to those movies. 
+The Casting Agency models a company that is responsible for creating movies and managing actor for the created movies. 
 
 Models:
 
@@ -37,15 +37,8 @@ Executive Producer
 
 All permissions a Casting Director has and…
 
-Add or delete a movie from the database
+delete a movie or actor  from the database
 
-Tests:
-
-One test for success behavior of each endpoint
-
-One test for error behavior of each endpoint
-
-At least two tests of RBAC for each role
 
 ## Getting Started
 
@@ -96,9 +89,6 @@ When testing on heroku, models.py should be:
 ```python
 database_path = os.environ['DATABASE_URL']
 
-# database_filename = "database.db"
-# project_dir = os.path.dirname(os.path.abspath(__file__))
-# database_path = "sqlite:///{}".format(os.path.join(project_dir, database_filename))
 ```
 
 From the working folder in terminal run:
@@ -120,14 +110,10 @@ python app.py
 
 I have already deployed the API in heroku and can use it directly. The host is:
 
-https://casting-agency-fxzero.herokuapp.com/movie
+https://casting-agency-himai.herokuapp.com/
 
 The token is in the `setup.sh`, you can test the API like this:
 
-```bash
-source setup.sh
-curl -H "Authorization: Bearer ${TOKEN_EP}" https://casting-agency-fxzero.herokuapp.com/movies | jq 
-```
 
 
 ## API document
