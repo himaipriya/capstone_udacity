@@ -1,0 +1,521 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section">
+    <div class="container">
+        <div class="columns">
+            <div class="column">
+                <h1 class='title'>
+                    Actors
+                    <a id='btnNewActor' class="button">New</a>
+                </h1>
+                <div class="container">
+                    <section id='newActorForm' class="section hidden">
+                        <h2 class="title">Add New Actor</h2>
+                        <form class="box">
+                            <div class="field">
+                                <label class="label">Name</label>
+                                <div class="control">
+                                    <input id="inputName" class="input" type="text" placeholder="Actor Name">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label class="label">Age</label>
+                                <div class="control">
+                                    <input id="inputAge" class="input" type="text" placeholder="Actor Name">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label class="label">Gender</label>
+                                <div class="control">
+                                    <div class="select">
+                                        <select id="inputGender">
+                                            <option>M</option>
+                                            <option>F</option>
+                                            <option>Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <div class="control">
+                                    <a id="btnSubmitActor" class="button is-link">Submit</a>
+                                </div>
+                            </div>
+                        </form>
+                    </section>
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Actor</th>
+                            <th>Age</th>
+                            <th>Gender</th>
+                            <th>Edit/Delete</th>
+                        </tr>
+                        </thead>
+                        <tbody id="actorsTable">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="column">
+                <h1 class='title'>Movies
+                    <a id='btnNewMovie' class="button">New</a>
+                </h1>
+                <div class="container">
+                    <section id='newMovieForm' class="section hidden">
+                        <h2 class="title">Add New Movie</h2>
+                        <form class="box">
+                            <div class="field">
+                                <label class="label">Title</label>
+                                <div class="control">
+                                    <input id="inputTitle" class="input" type="text" placeholder="Movie Title">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label class="label">Release Date</label>
+                                <div class="control">
+                                    <input id="inputReleaseDate" class="input" type="date">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <div class="control">
+                                    <a id="btnSubmitMovie" class="button is-link">Submit</a>
+                                </div>
+                            </div>
+                        </form>
+                    </section>
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Release Date</th>
+                            <th>Edit/Delete</th>
+                        </tr>
+                        </thead>
+                        <tbody id="moviesTable">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block javascript %}
+<script>
+    const JWTS_LOCAL_KEY = 'JWTS_LOCAL_KEY';
+    const MOVIES_TYPE = 'movies';
+    const ACTORS_TYPE = 'actors';
+
+    var token = "";
+    // check if token is in local storage
+    token = localStorage.getItem(JWTS_LOCAL_KEY) || null;
+
+    if (token === null) { // got here by callback
+        // parse the fragment
+        const fragment = window.location.hash.substr(1).split('&')[0].split('=');
+        // check if the fragment includes the access token
+        if (fragment[0] === 'access_token') {
+            // add the access token to the jwt
+            token = fragment[1];
+            // put item in local storage
+            localStorage.setItem(JWTS_LOCAL_KEY, this.token)
+        }
+    }
+
+    const actorsTable = document.getElementById('actorsTable');
+    const newActorBtn = document.getElementById('btnNewActor');
+    const newActorForm = document.getElementById('newActorForm');
+    const submitNewActorBtn = document.getElementById('btnSubmitActor');
+
+    const moviesTable = document.getElementById('moviesTable');
+    const newMovieBtn = document.getElementById('btnNewMovie');
+    const newMovieForm = document.getElementById('newMovieForm');
+    const submitNewMovieBtn = document.getElementById('btnSubmitMovie');
+
+    // actor-only methods
+
+    function addActorRow(actor) {
+        const tableRow = document.createElement('tr');
+        tableRow.setAttribute('id', "actorRow-" + actor['id']);
+        let tableRowHTML =
+            "<td class='actorName'>" + actor['name'] + "</td>";
+        tableRowHTML +=
+            "<td class='actorAge'>" + actor['age'] + "</td>";
+        tableRowHTML +=
+            "<td class='actorGender'>" + actor['gender'] + "</td>";
+        tableRowHTML +=
+            "<td><div class='buttons'>" +
+            "<button class='button editButton' data-id='" + actor['id'] + "'>" +
+            "Edit</button>" +
+            "<button class='button is-danger deleteButton' data-id='" + actor['id'] + "'>" +
+            "Delete</button>" +
+            "<button class='button is-link saveButton hidden' data-id='" + actor['id'] + "'>" +
+            "Save</button>" +
+            "<button class='button is-warning cancelButton hidden' data-id='" + actor['id'] + "'>" +
+            "Cancel</button></div></td>";
+
+        tableRow.innerHTML = tableRowHTML;
+        actorsTable.appendChild(tableRow);
+
+        tableRow.querySelector('.editButton').onclick = function (e) {
+            registerEditButton(e, ACTORS_TYPE)
+        };
+        tableRow.querySelector('.deleteButton').onclick = function (e) {
+            registerDeleteButton(e, ACTORS_TYPE)
+        }
+    }
+
+    async function populateActors() {
+        await fetch(
+            '/actors', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'bearer ' + localStorage.getItem('JWTS_LOCAL_KEY')
+                }
+            }
+        )
+            .then(response => response.json())
+            .then(jsonResponse => {
+                jsonResponse['actors'].forEach(addActorRow)
+            })
+    }
+
+    function resetTable(table) {
+        // clear table
+        table.innerHTML = "";
+        // repopulate with new actor
+        if (table === actorsTable) {
+            populateActors()
+        } else if (table === moviesTable) {
+            populateMovies()
+        }
+    }
+
+    function makeActorRowEditable(row, actor) {
+        togglePrimarySecondaryButtons(row);
+        const name = actor['name'];
+        const age = actor['age'].substring(0, 10);
+        const gender = actor['gender'];
+
+        // make tds into editable fields
+        const nameCell = row.querySelector('.actorName');
+        const ageCell = row.querySelector('.actorAge');
+        const genderCell = row.querySelector('.actorGender');
+
+        nameCell.innerHTML = "<input name='name' type='text' value='" + name + "'>";
+        ageCell.innerHTML = "<input name='age' type='text' value='" + age + "'>";
+        const genderText = "<select name='gender'><option value='M'>M</option><option value='F'>F</option><option value='Other'>Other</option>";
+        genderCell.innerHTML = genderText
+                .substring(0, genderText.indexOf(gender) + gender.length + 1) + // +1 for quotation
+            " selected" +
+            genderText.substring(genderText.indexOf(gender) + gender.length + 1);
+
+    }
+
+    function patchActor(e, row, actorId) {
+        e.preventDefault();
+        const name = row.querySelector('input[name="name"]').value;
+        const age = row.querySelector('input[name="age"]').value;
+        const gender = row.querySelector('select[name="gender"]').value;
+
+        fetch(
+            '/actors/' + actorId, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'bearer ' + localStorage.getItem('JWTS_LOCAL_KEY')
+                },
+                body: JSON.stringify({
+                    'name': name,
+                    'age': age,
+                    'gender': gender,
+                })
+            }
+        )
+            .then(response => response.json())
+            .then(jsonResponse => {
+                if (!jsonResponse['success']) {
+                    alert("You do not have permission to edit an Actor!")
+                } else {
+                    resetTable(actorsTable)
+                }
+            })
+    }
+
+    newActorBtn.onclick = function (e) {
+        e.preventDefault();
+        newActorForm.classList.remove('hidden')
+    };
+
+    submitNewActorBtn.onclick = async function (e) {
+        e.preventDefault();
+        newActorForm.classList.add('hidden');
+        // add new actor to db
+        await fetch(
+            '/actors', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'bearer ' + localStorage.getItem('JWTS_LOCAL_KEY')
+                },
+                body: JSON.stringify({
+                    'name': document.getElementById('inputName').value,
+                    'age': document.getElementById('inputAge').value,
+                    'gender': document.getElementById('inputGender').value,
+                })
+            }
+        )
+            .then(response => response.json())
+            .then(jsonResponse => {
+                if (!jsonResponse['success']) {
+                    alert("You do not have permission to add a new Actor")
+                } else {
+                    resetTable(actorsTable)
+                }
+            })
+            .catch(err => console.log(err))
+    };
+
+    // helper functions for movies and actors
+
+    function togglePrimarySecondaryButtons(row) {
+        let editButton = row.querySelector('.editButton');
+        let deleteButton = row.querySelector('.deleteButton');
+        let saveButton = row.querySelector('.saveButton');
+        let cancelButton = row.querySelector('.cancelButton');
+
+        if (editButton.classList.contains('hidden')) {
+            editButton.classList.remove('hidden');
+            deleteButton.classList.remove('hidden');
+            saveButton.classList.add('hidden');
+            cancelButton.classList.add('hidden')
+        } else {
+            editButton.classList.add('hidden');
+            deleteButton.classList.add('hidden');
+            saveButton.classList.remove('hidden');
+            cancelButton.classList.remove('hidden')
+        }
+    }
+
+    function getSingular(itemType) {
+        return itemType.substring(0, itemType.length - 1)
+    }
+
+    // movie-only methods
+
+    function addMovieRow(movie) {
+        const tableRow = document.createElement('tr');
+        tableRow.setAttribute('id', 'movieRow-' + movie['id']);
+
+        let tableRowHTML =
+            "<td class='movieTitle'>" + movie['title'] + "</td>";
+        tableRowHTML +=
+            "<td class='movieReleaseDate'>" + movie['release_date'].substring(0, 10) + "</td>";
+        tableRowHTML +=
+            "<td><div class='buttons'>" +
+            "<button class='button editButton' data-id='" + movie['id'] + "'>" +
+            "Edit</button>" +
+            "<button class='button is-danger deleteButton' data-id='" + movie['id'] + "'>" +
+            "Delete</button>" +
+            "<button class='button is-link saveButton hidden' data-id='" + movie['id'] + "'>" +
+            "Save</button>" +
+            "<button class='button is-warning cancelButton hidden' data-id='" + movie['id'] + "'>" +
+            "Cancel</button></div></td>";
+
+        tableRow.innerHTML = tableRowHTML;
+        moviesTable.appendChild(tableRow);
+
+        tableRow.querySelector('.editButton').onclick = function (e) {
+            registerEditButton(e, MOVIES_TYPE)
+        };
+        tableRow.querySelector('.deleteButton').onclick = function (e) {
+            registerDeleteButton(e, MOVIES_TYPE)
+        }
+    }
+
+    async function populateMovies() {
+        await fetch(
+            '/movies', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'bearer ' + localStorage.getItem('JWTS_LOCAL_KEY')
+                }
+            }
+        )
+            .then(response => response.json())
+            .then(jsonResponse => {
+                jsonResponse['movies'].forEach(addMovieRow)
+            })
+    }
+
+    function makeMovieRowEditable(row, movie) {
+        togglePrimarySecondaryButtons(row);
+        const title = movie['title'];
+        const releaseDate = movie['release_date'].toString().substring(0, 10);
+
+        // make tds into editable fields
+        const titleCell = row.querySelector('.movieTitle');
+        const releaseDateCell = row.querySelector('.movieReleaseDate');
+
+        titleCell.innerHTML = `<input name='title' type='text' , value='${title}'>`;
+        releaseDateCell.innerHTML = "<input name='releaseDate' type='date' value='" + releaseDate + "'>";
+    }
+
+    function patchMovie(e, row, movieId) {
+        e.preventDefault();
+        const title = row.querySelector('input[name="title"]').value;
+        const releaseDate = row.querySelector('input[name="releaseDate"]').value;
+
+        fetch(
+            '/movies/' + movieId, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'bearer ' + localStorage.getItem('JWTS_LOCAL_KEY')
+                },
+                body: JSON.stringify({
+                    'title': title,
+                    'releaseDate': releaseDate,
+                })
+            }
+        )
+            .then(response => response.json())
+            .then(jsonResponse => {
+                if (!jsonResponse['success']) {
+                    alert("your do not have permission to edit a Movie!")
+                } else {
+                    resetTable(moviesTable)
+                }
+            })
+    }
+
+    newMovieBtn.onclick = function (e) {
+        e.preventDefault();
+        newMovieForm.classList.remove('hidden')
+    };
+
+    submitNewMovieBtn.onclick = async function (e) {
+        e.preventDefault();
+        newMovieForm.classList.add('hidden');
+        await fetch(
+            '/movies', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'bearer ' + localStorage.getItem('JWTS_LOCAL_KEY')
+                },
+                body: JSON.stringify({
+                    'title': document.getElementById('inputTitle').value,
+                    'releaseDate': document.getElementById('inputReleaseDate').value,
+                })
+            }
+        )
+            .then(response => response.json())
+            .then(jsonResponse => {
+                if (!jsonResponse['success']) {
+                    alert("You do not have permissions to add a new Movie")
+                } else {
+                    resetTable(moviesTable)
+                }
+            })
+    };
+
+    // actor & movie methods
+
+    function registerEditButton(e, itemType) {
+        e.preventDefault();
+        console.log('registering edit button of type:' + itemType);
+
+        const id = e.target.dataset['id'];
+        const rowName = itemType === 'actors' ? 'actorRow-' : 'movieRow-';
+        const tableRow = document.getElementById(rowName + id);
+        console.log("tableRow:");
+        console.log(tableRow);
+        fetch(
+            '/' + itemType + '/' + id, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                }
+            }
+        )
+            .then(response => response.json())
+            .then(jsonResponse => {
+                const item = jsonResponse[getSingular(itemType)];
+                editItem(tableRow, item, itemType)
+            })
+
+    }
+
+    function registerDeleteButton(e, itemType) {
+        e.preventDefault();
+        const id = e.target.dataset['id'];
+
+        if (confirm("Are you sure you want to delete?")) {
+            fetch('/' + itemType + '/' + id, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+                .then(response => response.json())
+                .then(jsonResponse => {
+                    if (jsonResponse['success']) {
+                        const tableRow = document.getElementById(getSingular(itemType) + "Row-" + id);
+                        tableRow.parentNode.removeChild(tableRow)
+                    } else {
+                        alert("You do not have permission to delete " + itemType)
+                    }
+                })
+                .catch(err => console.log(err))
+        }
+    }
+
+    function editItem(row, item, itemType) {
+        console.log("editing item:");
+        console.log(item);
+        if (itemType === MOVIES_TYPE) {
+            makeMovieRowEditable(row, item)
+        } else {
+            makeActorRowEditable(row, item)
+        }
+        const saveButton = row.querySelector('.saveButton');
+        const cancelButton = row.querySelector('.cancelButton');
+
+        saveButton.onclick = function (e) {
+            console.log("saveButton clicked");
+            console.log(item);
+            if (itemType === MOVIES_TYPE) {
+                // item is a movie
+                patchMovie(e, row, item['id'])
+            } else {
+                // item is an actor
+                patchActor(e, row, item['id'])
+            }
+        };
+
+        cancelButton.onclick = function (e) {
+            if (itemType === MOVIES_TYPE) {
+                // item is a movie
+                resetTable(moviesTable)
+            } else {
+                // item is an actor
+                resetTable(actorsTable)
+            }
+        }
+    }
+
+    // on first load, populate the tables
+    populateActors();
+    populateMovies()
+
+</script>
+{% endblock %}
