@@ -199,7 +199,7 @@
     function makeActorRowEditable(row, actor) {
         togglePrimarySecondaryButtons(row);
         const name = actor['name'];
-        const age = actor['age'].substring(0, 10);
+        const age = actor['age'];
         const gender = actor['gender'];
 
         // make tds into editable fields
@@ -210,10 +210,7 @@
         nameCell.innerHTML = "<input name='name' type='text' value='" + name + "'>";
         ageCell.innerHTML = "<input name='age' type='text' value='" + age + "'>";
         const genderText = "<select name='gender'><option value='M'>M</option><option value='F'>F</option><option value='Other'>Other</option>";
-        genderCell.innerHTML = genderText
-                .substring(0, genderText.indexOf(gender) + gender.length + 1) + // +1 for quotation
-            " selected" +
-            genderText.substring(genderText.indexOf(gender) + gender.length + 1);
+        genderCell.innerHTML ="<select name='gender'><option value='M'>M</option><option value='F'>F</option><option value='Other'>Other</option>";
 
     }
 
@@ -381,7 +378,7 @@
                 },
                 body: JSON.stringify({
                     'title': title,
-                    'releaseDate': releaseDate,
+                    'release_date': releaseDate,
                 })
             }
         )
@@ -412,7 +409,7 @@
                 },
                 body: JSON.stringify({
                     'title': document.getElementById('inputTitle').value,
-                    'releaseDate': document.getElementById('inputReleaseDate').value,
+                    'release_date': document.getElementById('inputReleaseDate').value,
                 })
             }
         )

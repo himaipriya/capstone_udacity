@@ -1,7 +1,8 @@
 # Casting-Agency-Specifications
 
-## Casting Agency project
-The Casting Agency models a company that is responsible for creating movies and managing actor for the created movies. 
+## Motivation for project
+The Casting Agency models a company that is responsible for creating movies and managing and assigning actors to those movies based on their roles 
+defined for each user. 
 
 Models:
 
@@ -9,36 +10,13 @@ Movies with attributes title and release date
 
 Actors with attributes name, age and gender
 
-Endpoints:
+Tests:
 
-GET /actors and /movies
+One test for success behavior of each endpoint
 
-DELETE /actors/ and /movies/
+One test for error behavior of each endpoint
 
-POST /actors and /movies and
-
-PATCH /actors/ and /movies/
-
-Roles:
-
-Casting Assistant
-
-Can view actors and movies
-
-Casting Director
-
-All permissions a Casting Assistant has and…
-
-Add  an actor  or movie  from the database
-
-Modify actors or movies
-
-Executive Producer
-
-All permissions a Casting Director has and…
-
-delete a movie or actor  from the database
-
+At least two tests of RBAC for each role
 
 ## Getting Started
 
@@ -50,7 +28,8 @@ Follow instructions to install the latest version of python for your platform in
 
 #### Virtual Enviornment
 
-We recommend working within a virtual environment whenever using Python for projects. This keeps your dependencies for each project separate and organaized. Instructions for setting up a virual enviornment for your platform can be found in the [python docs](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
+We recommend working within a virtual environment whenever using Python for projects. This keeps your dependencies for each project separate and organised. 
+Instructions for setting up a virual enviornment for your platform can be found in the [python docs](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
 
 ```bash
 pip install virtualenv
@@ -81,13 +60,10 @@ When testing locally, models.py should be:
 ```python
 # database_path = os.environ['DATABASE_URL']
 
-database_filename = "database.db"
-project_dir = os.path.dirname(os.path.abspath(__file__))
-database_path = "sqlite:///{}".format(os.path.join(project_dir, database_filename))
 ```
 When testing on heroku, models.py should be:
 ```python
-database_path = os.environ['DATABASE_URL']
+# database_path = os.environ['DATABASE_URL']
 
 ```
 
@@ -98,23 +74,48 @@ python manage.py db migrate
 python manage.py db upgrade
 ```
 
-## Running the server locally
+## Running the Server
 
-To run the server, execute:
+Run the following shell command to load the necessary environment variables from within the project root directory. Then start the flask server
 
-```bash
+```shell
+source ./setup.sh
 python app.py
 ```
 
+## Running Tests Locally
+
+To test the api, complete the following commands.
+
+```shell
+source ./setup.sh
+python test_app.py
+```
 ## Running the server on heroku
 
 I have already deployed the API in heroku and can use it directly. The host is:
 
 https://casting-agency-himai.herokuapp.com/
 
-The token is in the `setup.sh`, you can test the API like this:
+The token is in the `setup.sh`, you can test the API like this and AuthO third party authorisation provider allowed a maximum of 24 hours token validation :
 
+```bash
+source setup.sh
+curl -H "Authorization: Bearer ${EXECUTIVE_PRODUCER}" https://casting-agency-himai.herokuapp.com/ | jq 
+```
 
+## Roles
+
+- Casting Assistant
+  - Can view actors and movies
+- Casting Director
+  - All permissions a Casting Assistant has and…
+  - Add  an actor from the database
+  - Modify actors or movies
+- Executive Producer
+  - All permissions a Casting Director has and…
+  - delete a movie from the database
+  
 
 ## API document
 ```
@@ -138,7 +139,6 @@ GET '/actors'
     {
       "age": 31,
       "gender": "M",
-      "id": 1,
       "name": "actor1"
     }
   ],
@@ -154,7 +154,6 @@ POST '/actors'
   "actors": {
     "age": 31,
     "gender": "M",
-    "id": 1,
     "name": "actor1"
   },
   "success": true
@@ -169,7 +168,6 @@ PATCH '/actors/<actor_id>'
   "actors": {
     "age": 31,
     "gender": "M",
-    "id": 1,
     "name": "actor2"
   },
   "success": true
@@ -180,7 +178,11 @@ DELETE '/actors/<actor_id>'
 - Request Arguments: actor_id
 - Returns: The id of the actor which was deleted 
 {
-  "actors": "1",
+  actors": {
+    "age": 31,
+    "gender": "M",
+    "name": "actor2"
+  },
   "success": true
 }
 
@@ -191,7 +193,7 @@ GET '/movies'
 {
   "movies": [
     {
-      "id": 1,
+      "title": "movie",
       "release_date": "2019-11-11",
     }
   ],
@@ -205,7 +207,7 @@ POST '/movies'
 - Returns: The movie info which we added with this request.
 {
   "movies": {
-    "id": 1,
+    "title": "movie",
     "release_date": "2019-11-11",
   },
   "success": true
@@ -218,7 +220,7 @@ PATCH '/movies/<movie_id>'
 - Returns: The movie info which we updated with this request.
 {
   "movies": {
-    "id": 1,
+    "title": "movie",
     "release_date": "2019-11-11",
   },
   "success": true
@@ -229,15 +231,12 @@ DELETE '/movies/<movie_id>'
 - Request Arguments: movie_id
 - Returns: The id of the movie which was deleted 
 {
-  "movies": "1",
+  "movies": {
+    "title": "movie",
+    "release_date": "2019-11-11",
+  },
   "success": true
 }
 ```
 
-## Testing
-To run the tests, run
-
-```python
-pytest test_app.py
-```
 

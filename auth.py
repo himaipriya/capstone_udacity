@@ -9,7 +9,6 @@ AUTH0_DOMAIN = environ.get('AUTH0_DOMAIN', 'fsndauthorise.auth0.com')
 ALGORITHMS = ['RS256']
 API_AUDIENCE = environ.get('API_AUDIENCE', 'casting agency')
 
-## AuthError Exception
 '''
 AuthError Exception
 A standardized way to communicate auth failure modes
@@ -21,8 +20,6 @@ class AuthError(Exception):
         self.error = error
         self.status_code = status_code
 
-
-## Auth Header
 
 '''
 implement get_token_auth_header() method
